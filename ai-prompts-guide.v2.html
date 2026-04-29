@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Prompts, Agents & Benchmarking Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300..700&display=swap" rel="stylesheet">
+<style>
+  /* ===== DESIGN TOKENS ===== */
+  :root, [data-theme="light"] {
+    --color-bg: #f7f6f2;
+    --color-surface: #f9f8f5;
+    --color-surface-2: #fbfbf9;
+    --color-surface-offset: #f3f0ec;
+    --color-surface-dynamic: #e6e4df;
+    --color-divider: #dcd9d5;
+    --color-border: #d4d1ca;
+    --color-text: #28251d;
+    --color-text-muted: #7a7974;
+    --color-text-faint: #bab9b4;
+    --color-text-inverse: #f9f8f4;
+    --color-primary: #01696f;
+    --color-primary-hover: #0c4e54;
+    --color-primary-highlight: #cedcd8;
+    --color-surface-accent: color-mix(in oklch, #01696f 6%, #f9f8f5);
+    --shadow-sm: 0 1px 2px oklch(0.2 0.01 80 / 0.06);
+    --shadow-md: 0 4px 12px oklch(0.2 0.01 80 / 0.08);
+    --shadow-lg: 0 12px 32px oklch(0.2 0.01 80 / 0.12);
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-full: 9999px;
+    --font-display: 'Instrument Serif', Georgia, serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+    --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+    --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+    --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+    --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+    --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+    --text-2xl: clamp(2rem, 1.2rem + 2.5vw, 3.5rem);
+    --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem;
+    --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem;
+    --space-12: 3rem; --space-16: 4rem; --space-20: 5rem;
+    --transition: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+    --content-narrow: 640px; --content-default: 860px;
+  }
+  [data-theme="dark"] {
+    --color-bg: #171614;
+    --color-surface: #1c1b19;
+    --color-surface-2: #201f1d;
+    --color-surface-offset: #1d1c1a;
+    --color-surface-dynamic: #2d2c2a;
+    --color-divider: #262523;
+    --color-border: #393836;
+    --color-text: #cdccca;
+    --color-text-muted: #797876;
+    --color-text-faint: #5a5957;
+    --color-text-inverse: #2b2a28;
+    --color-primary: #4f98a3;
+    --color-primary-hover: #227f8b;
+    --color-primary-highlight: #313b3b;
+    --color-surface-accent: color-mix(in oklch, #4f98a3 8%, #1c1b19);
+    --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.2);
+    --shadow-md: 0 4px 12px oklch(0 0 0 / 0.3);
+    --shadow-lg: 0 12px 32px oklch(0 0 0 / 0.4);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+      --color-bg: #171614; --color-surface: #1c1b19; --color-surface-2: #201f1d;
+      --color-surface-offset: #1d1c1a; --color-surface-dynamic: #2d2c2a;
+      --color-divider: #262523; --color-border: #393836; --color-text: #cdccca;
+      --color-text-muted: #797876; --color-text-faint: #5a5957;
+      --color-text-inverse: #2b2a28; --color-primary: #4f98a3;
+      --color-primary-hover: #227f8b; --color-primary-highlight: #313b3b;
+      --color-surface-accent: color-mix(in oklch, #4f98a3 8%, #1c1b19);
+      --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.2);
+      --shadow-md: 0 4px 12px oklch(0 0 0 / 0.3);
+      --shadow-lg: 0 12px 32px oklch(0 0 0 / 0.4);
+    }
+  }
+
+  /* ===== BASE ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; scroll-padding-top: 80px; -webkit-font-smoothing: antialiased; }
+  body { font-family: var(--font-body); font-size: var(--text-base); color: var(--color-text); background: var(--color-bg); line-height: 1.7; min-height: 100dvh; }
+  img { display: block; max-width: 100%; }
+  ::selection { background: oklch(from var(--color-primary) l c h / 0.2); }
+  :focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; border-radius: var(--radius-sm); }
+
+  /* ===== LAYOUT ===== */
+  .site-wrapper { display: grid; grid-template-columns: 260px 1fr; grid-template-rows: auto 1fr; min-height: 100dvh; }
+  .site-header { grid-column: 1 / -1; position: sticky; top: 0; z-index: 100; background: var(--color-surface); border-bottom: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between; padding: var(--space-4) var(--space-8); box-shadow: var(--shadow-sm); }
+  .sidebar { grid-column: 1; position: sticky; top: 57px; height: calc(100dvh - 57px); overflow-y: auto; padding: var(--space-8) var(--space-6); border-right: 1px solid var(--color-border); background: var(--color-surface); scrollbar-width: thin; scrollbar-color: var(--color-border) transparent; }
+  .main-content { grid-column: 2; padding: var(--space-12) var(--space-16); max-width: 900px; }
+
+  /* ===== HEADER ===== */
+  .header-brand { display: flex; align-items: center; gap: var(--space-3); text-decoration: none; color: var(--color-text); }
+  .header-logo svg { color: var(--color-primary); }
+  .header-title { font-family: var(--font-display); font-size: var(--text-lg); line-height: 1.2; font-style: italic; }
+  .header-actions { display: flex; align-items: center; gap: var(--space-3); }
+  .theme-toggle { width: 36px; height: 36px; border-radius: var(--radius-full); border: 1px solid var(--color-border); background: var(--color-surface-offset); color: var(--color-text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: color var(--transition), background var(--transition), border-color var(--transition); }
+  .theme-toggle:hover { color: var(--color-primary); border-color: var(--color-primary); background: var(--color-surface-accent); }
+  .badge { font-size: var(--text-xs); background: var(--color-primary-highlight); color: var(--color-primary); padding: 2px var(--space-2); border-radius: var(--radius-full); font-weight: 500; letter-spacing: 0.03em; }
+
+  /* ===== SIDEBAR ===== */
+  .sidebar-label { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; color: var(--color-text-faint); margin-bottom: var(--space-3); margin-top: var(--space-6); }
+  .sidebar-label:first-child { margin-top: 0; }
+  .nav-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+  .nav-item a { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); font-size: var(--text-sm); color: var(--color-text-muted); text-decoration: none; transition: color var(--transition), background var(--transition); line-height: 1.4; }
+  .nav-item a:hover { color: var(--color-text); background: var(--color-surface-offset); }
+  .nav-item a.active { color: var(--color-primary); background: var(--color-surface-accent); font-weight: 500; }
+  .nav-item a .nav-icon { width: 14px; height: 14px; opacity: 0.5; flex-shrink: 0; }
+  .nav-sub { list-style: none; padding-left: var(--space-5); display: flex; flex-direction: column; gap: 1px; margin-top: 2px; }
+  .nav-sub a { font-size: var(--text-xs); padding: var(--space-1) var(--space-3); }
+
+  /* ===== HERO ===== */
+  .page-hero { margin-bottom: var(--space-16); padding-bottom: var(--space-12); border-bottom: 1px solid var(--color-divider); }
+  .page-hero-eyebrow { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.1em; color: var(--color-primary); font-weight: 600; margin-bottom: var(--space-4); }
+  .page-hero h1 { font-family: var(--font-display); font-size: var(--text-2xl); line-height: 1.1; font-weight: 400; font-style: italic; margin-bottom: var(--space-5); color: var(--color-text); }
+  .page-hero-lead { font-size: var(--text-lg); color: var(--color-text-muted); max-width: 60ch; line-height: 1.6; margin-bottom: var(--space-6); }
+  .hero-meta { display: flex; gap: var(--space-6); flex-wrap: wrap; }
+  .hero-meta-item { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-xs); color: var(--color-text-faint); }
+  .hero-meta-item svg { color: var(--color-primary); opacity: 0.7; }
+
+  /* ===== CONTENT SECTIONS ===== */
+  .content-section { margin-bottom: var(--space-20); scroll-margin-top: 80px; }
+  .section-eyebrow { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.1em; color: var(--color-primary); font-weight: 600; margin-bottom: var(--space-3); }
+  .section-title { font-family: var(--font-display); font-size: var(--text-xl); font-style: italic; font-weight: 400; line-height: 1.2; margin-bottom: var(--space-4); color: var(--color-text); }
+  .section-subtitle { font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-3); margin-top: var(--space-8); color: var(--color-text); }
+  .section-subtitle:first-of-type { margin-top: var(--space-5); }
+  p { margin-bottom: var(--space-4); color: var(--color-text); max-width: 72ch; }
+  p + p { margin-top: var(--space-1); }
+
+  /* ===== TABLE ===== */
+  .table-wrap { overflow-x: auto; margin: var(--space-6) 0; border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); }
+  table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+  thead { background: var(--color-surface-offset); }
+  thead th { padding: var(--space-3) var(--space-4); text-align: left; font-weight: 600; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-muted); border-bottom: 1px solid var(--color-border); white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--color-divider); transition: background var(--transition); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--color-surface-offset); }
+  tbody td { padding: var(--space-3) var(--space-4); vertical-align: top; line-height: 1.5; }
+  tbody td:first-child { font-weight: 500; white-space: nowrap; }
+  .tag { display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: var(--radius-full); letter-spacing: 0.04em; }
+  .tag-teal { background: var(--color-primary-highlight); color: var(--color-primary); }
+
+  /* ===== CODE ===== */
+  pre { background: var(--color-surface-offset); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-6); overflow-x: auto; margin: var(--space-6) 0; font-size: var(--text-xs); line-height: 1.7; box-shadow: var(--shadow-sm); }
+  code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.9em; }
+  pre code { font-size: inherit; color: var(--color-text); }
+  :not(pre) > code { background: var(--color-surface-offset); border: 1px solid var(--color-border); padding: 1px 5px; border-radius: var(--radius-sm); font-size: 0.85em; color: var(--color-primary); }
+  .code-label { font-size: var(--text-xs); color: var(--color-text-faint); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: var(--space-2); }
+
+  /* ===== CALLOUT CARDS ===== */
+  .callout { background: var(--color-surface-accent); border: 1px solid oklch(from var(--color-primary) l c h / 0.2); border-radius: var(--radius-lg); padding: var(--space-5) var(--space-6); margin: var(--space-6) 0; }
+  .callout-title { font-size: var(--text-sm); font-weight: 700; color: var(--color-primary); margin-bottom: var(--space-2); display: flex; align-items: center; gap: var(--space-2); }
+  .callout p { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0; max-width: none; }
+
+  /* ===== PATTERN CARDS ===== */
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr)); gap: var(--space-4); margin: var(--space-6) 0; }
+  .card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-5); box-shadow: var(--shadow-sm); transition: box-shadow var(--transition), border-color var(--transition); }
+  .card:hover { box-shadow: var(--shadow-md); border-color: oklch(from var(--color-primary) l c h / 0.3); }
+  .card-icon { width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--color-primary-highlight); color: var(--color-primary); display: flex; align-items: center; justify-content: center; margin-bottom: var(--space-3); }
+  .card-title { font-size: var(--text-sm); font-weight: 700; color: var(--color-text); margin-bottom: var(--space-2); }
+  .card-desc { font-size: var(--text-xs); color: var(--color-text-muted); line-height: 1.6; max-width: none; margin: 0; }
+
+  /* ===== LIST STYLES ===== */
+  .content-list { list-style: none; margin: var(--space-4) 0 var(--space-6); display: flex; flex-direction: column; gap: var(--space-2); }
+  .content-list li { display: flex; align-items: flex-start; gap: var(--space-3); font-size: var(--text-sm); color: var(--color-text); padding: var(--space-3) var(--space-4); background: var(--color-surface); border: 1px solid var(--color-divider); border-radius: var(--radius-md); }
+  .content-list li::before { content: ''; width: 6px; height: 6px; border-radius: var(--radius-full); background: var(--color-primary); flex-shrink: 0; margin-top: 7px; }
+  .step-list { list-style: none; margin: var(--space-4) 0 var(--space-6); display: flex; flex-direction: column; gap: var(--space-3); counter-reset: steps; }
+  .step-list li { display: flex; align-items: flex-start; gap: var(--space-4); font-size: var(--text-sm); color: var(--color-text); counter-increment: steps; }
+  .step-list li::before { content: counter(steps); min-width: 28px; height: 28px; border-radius: var(--radius-full); background: var(--color-primary); color: var(--color-text-inverse); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+  .step-list li span { padding-top: 4px; }
+
+  /* ===== RESOURCE TABLE ===== */
+  .resource-row td:first-child { color: var(--color-primary); font-weight: 600; }
+  .resource-row td:first-child a { color: inherit; text-decoration: none; }
+  .resource-row td:first-child a:hover { text-decoration: underline; }
+
+  /* ===== DIVIDER ===== */
+  .section-divider { border: none; border-top: 1px solid var(--color-divider); margin: var(--space-16) 0; }
+
+  /* ===== FOOTER ===== */
+  .site-footer { grid-column: 2; padding: var(--space-8) var(--space-16); border-top: 1px solid var(--color-divider); display: flex; justify-content: space-between; align-items: center; font-size: var(--text-xs); color: var(--color-text-faint); }
+
+  /* ===== PROGRESS BAR ===== */
+  #reading-progress { position: fixed; top: 0; left: 0; height: 2px; background: var(--color-primary); width: 0%; z-index: 200; transition: width 0.1s linear; }
+
+  /* ===== MOBILE ===== */
+  .sidebar-toggle { display: none; }
+  @media (max-width: 768px) {
+    .site-wrapper { grid-template-columns: 1fr; }
+    .site-header { padding: var(--space-4); }
+    .sidebar { grid-column: 1; position: fixed; left: -280px; top: 57px; width: 260px; height: calc(100dvh - 57px); z-index: 90; transition: left var(--transition); }
+    .sidebar.open { left: 0; box-shadow: var(--shadow-lg); }
+    .main-content { grid-column: 1; padding: var(--space-8) var(--space-5); }
+    .site-footer { grid-column: 1; }
+    .sidebar-toggle { display: flex; width: 36px; height: 36px; align-items: center; justify-content: center; background: none; border: 1px solid var(--color-border); border-radius: var(--radius-md); cursor: pointer; color: var(--color-text-muted); }
+    .cards-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ===== KEYWORD HIGHLIGHT in code ===== */
+  .kw { color: #01696f; font-weight: 600; }
+  [data-theme="dark"] .kw { color: #4f98a3; }
+  .str { color: #7a39bb; }
+  [data-theme="dark"] .str { color: #a86fdf; }
+  .cm { color: var(--color-text-faint); font-style: italic; }
+</style>
+</head>
+<body>
+<div id="reading-progress"></div>
+
+<div class="site-wrapper">
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <a href="#" class="header-brand">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-label="AI Guide logo">
+        <rect x="2" y="2" width="10" height="10" rx="2" fill="currentColor" opacity="0.8"/>
+        <rect x="16" y="2" width="10" height="10" rx="2" fill="currentColor" opacity="0.4"/>
+        <rect x="2" y="16" width="10" height="10" rx="2" fill="currentColor" opacity="0.4"/>
+        <rect x="16" y="16" width="10" height="10" rx="2" fill="currentColor" opacity="0.8"/>
+        <circle cx="14" cy="14" r="3" fill="currentColor"/>
+      </svg>
+      <span class="header-title">AI Mastery Guide</span>
+    </a>
+    <div class="header-actions">
+      <span class="badge">2026 Edition</span>
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <button class="theme-toggle" data-theme-toggle aria-label="Toggle theme">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <p class="sidebar-label">Overview</p>
+    <ul class="nav-list">
+      <li class="nav-item"><a href="#intro" class="active">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+        Introduction
+      </a></li>
+    </ul>
+
+    <p class="sidebar-label">Part 1 — Prompts</p>
+    <ul class="nav-list">
+      <li class="nav-item"><a href="#prompt-types">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M5 7h6M5 10h4"/></svg>
+        Core Prompt Types
+      </a></li>
+      <li class="nav-item"><a href="#advanced-patterns">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12 L8 4 L14 12"/><path d="M5 9h6"/></svg>
+        Advanced Patterns
+      </a></li>
+      <li class="nav-item"><a href="#quality-techniques">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M5.5 8l2 2 3-3"/></svg>
+        Quality Techniques
+      </a></li>
+      <li class="nav-item"><a href="#rag">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h4v8H2zM6 2h8v5H6zM6 9h8v5H6z"/></svg>
+        RAG
+      </a></li>
+    </ul>
+
+    <p class="sidebar-label">Part 2 — Agents</p>
+    <ul class="nav-list">
+      <li class="nav-item"><a href="#skills">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v4M8 10v4M2 8h4M10 8h4"/><circle cx="8" cy="8" r="2"/></svg>
+        Skills
+      </a></li>
+      <li class="nav-item"><a href="#hooks">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 2v6a3 3 0 0 0 6 0V5"/></svg>
+        Hooks
+      </a></li>
+      <li class="nav-item"><a href="#agent-architecture">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="5" height="4" rx="1"/><rect x="9" y="5" width="5" height="4" rx="1"/><path d="M7 7h2"/></svg>
+        Agent Architecture
+      </a></li>
+      <li class="nav-item"><a href="#mcp">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><circle cx="3" cy="4" r="1.5"/><circle cx="13" cy="4" r="1.5"/><circle cx="3" cy="12" r="1.5"/><circle cx="13" cy="12" r="1.5"/><path d="M4.5 5l2 2M11.5 5l-2 2M4.5 11l2-2M11.5 11l-2-2"/></svg>
+        MCP Protocol
+      </a></li>
+      <li class="nav-item"><a href="#plugins">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2v3H3l5 5 5-5h-3V2H6z"/><path d="M2 11v3h12v-3"/></svg>
+        Plugins
+      </a></li>
+      <li class="nav-item"><a href="#agent-prompts">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h12v7H2z"/><path d="M5 13h6M8 10v3"/></svg>
+        Prompts
+      </a></li>
+    </ul>
+
+    <p class="sidebar-label">Part 3 — Benchmarking</p>
+    <ul class="nav-list">
+      <li class="nav-item"><a href="#promptflow">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="4" height="3" rx="0.5"/><rect x="6" y="7" width="4" height="3" rx="0.5"/><rect x="11" y="4" width="4" height="3" rx="0.5"/><path d="M5 5.5h1M10 8.5h1"/></svg>
+        PromptFlow
+      </a></li>
+      <li class="nav-item"><a href="#langchain">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8c0-3.3 2.7-6 6-6s6 2.7 6 6-2.7 6-6 6"/><path d="M8 5v3l2 2"/></svg>
+        LangChain + LangSmith
+      </a></li>
+      <li class="nav-item"><a href="#comparison">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M3 6l5-4 5 4M3 10l5 4 5-4"/></svg>
+        Comparison
+      </a></li>
+    </ul>
+
+    <p class="sidebar-label">Resources</p>
+    <ul class="nav-list">
+      <li class="nav-item"><a href="#resources">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h8a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M6 6h4M6 9h3"/></svg>
+        Learning Resources
+      </a></li>
+    </ul>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- HERO -->
+    <section class="page-hero" id="intro">
+      <p class="page-hero-eyebrow">Complete Reference · 2026</p>
+      <h1>AI Prompts, Agents &amp;<br>Benchmarking Guide</h1>
+      <p class="page-hero-lead">A practical reference for engineers — covering prompt types, advanced patterns, agent building blocks (skills, hooks, MCP), and systematic benchmarking with PromptFlow and LangSmith.</p>
+      <div class="hero-meta">
+        <span class="hero-meta-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          April 2026
+        </span>
+        <span class="hero-meta-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          ~15 min read
+        </span>
+        <span class="hero-meta-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          3 Parts · 4 Tools
+        </span>
+      </div>
+    </section>
+
+    <!-- ===== PART 1 ===== -->
+    <section class="content-section" id="prompt-types">
+      <p class="section-eyebrow">Part 1 — Foundations</p>
+      <h2 class="section-title">Core Prompt Types</h2>
+      <p>Understanding prompt categories is the foundation of effective AI interaction. The main types work across all major models — GPT, Claude, and Gemini — and each serves a distinct interaction pattern.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Type</th><th>Purpose</th><th>Example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="tag tag-teal">Zero-Shot</span></td><td>Quick general response, no examples needed</td><td><code>"Summarize this article in 5 bullets."</code></td></tr>
+            <tr><td><span class="tag tag-teal">Few-Shot</span></td><td>Mimic a structure or tone using 2–3 examples</td><td><code>"Here are 2 examples. Write a third in the same style."</code></td></tr>
+            <tr><td><span class="tag tag-teal">Instructional</span></td><td>Direct commands with verbs: write, explain, compare</td><td><code>"Write an exec summary under 100 words."</code></td></tr>
+            <tr><td><span class="tag tag-teal">Role-Based</span></td><td>Give the AI a persona for domain-specific output</td><td><code>"You are a senior Python engineer. Review this code."</code></td></tr>
+            <tr><td><span class="tag tag-teal">Contextual</span></td><td>Add background framing before the question</td><td><code>"This is for a fintech API docs audience."</code></td></tr>
+            <tr><td><span class="tag tag-teal">Comparative</span></td><td>Evaluate or contrast multiple options</td><td><code>"Compare Option A vs B in strengths and weaknesses."</code></td></tr>
+            <tr><td><span class="tag tag-teal">Opinion-Eliciting</span></td><td>Solicit the AI's viewpoint on a topic</td><td><code>"What might happen if X regulation passes?"</code></td></tr>
+            <tr><td><span class="tag tag-teal">Task-Specific</span></td><td>Drive a concrete action, used heavily in agents</td><td><code>"Run this script and return only errors."</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="content-section" id="advanced-patterns">
+      <h2 class="section-title">Advanced Patterns</h2>
+      <p>Beyond basic types, patterns are reusable structures that solve recurring interaction problems. These are especially powerful in multi-turn conversations and agentic workflows.</p>
+
+      <div class="cards-grid">
+        <div class="card">
+          <div class="card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          </div>
+          <p class="card-title">Chain-of-Thought (CoT)</p>
+          <p class="card-desc">Add <em>"Think step by step"</em> before complex reasoning. Forces intermediate reasoning steps, dramatically improving accuracy on math, logic, and code.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <p class="card-title">Flipped Interaction</p>
+          <p class="card-desc">Ask the AI to question <em>you</em> until it has enough context: <em>"Ask me questions one at a time until you can write a full project spec."</em></p>
+        </div>
+        <div class="card">
+          <div class="card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+          </div>
+          <p class="card-title">Tail Generation</p>
+          <p class="card-desc">Instruct the model to repeat key info at the end of each reply. Maintains context in long conversations where context window pressure builds.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>
+          </div>
+          <p class="card-title">Role Persona</p>
+          <p class="card-desc">Persistent role assignment in the system prompt: <em>"You are a Python expert. Return only code, no explanation."</em> Eliminates repeated context-setting.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </div>
+          <p class="card-title">RAG Prompting</p>
+          <p class="card-desc">Connect the model to your knowledge base so it answers with domain-specific accuracy. Chunk documents at ~512 tokens with overlap for best retrieval recall.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <p class="card-title">Output Constraints</p>
+          <p class="card-desc">Always define format, length, and audience in the prompt. Use few-shot examples in API calls when output format consistency matters (e.g., structured JSON).</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-section" id="quality-techniques">
+      <h2 class="section-title">Quality Techniques</h2>
+      <p>These go beyond individual prompts into how you architect your overall AI usage for reliable, production-grade output.</p>
+
+      <h3 class="section-subtitle">Practical Tips for Engineers</h3>
+      <ul class="content-list">
+        <li>Define <strong>role + task + constraints</strong> in every system prompt: <em>"You are a Python expert. Rewrite the following function to be O(n). Return only code, no explanation."</em></li>
+        <li>Use <strong>few-shot examples</strong> in API calls when output format consistency matters — JSON responses, structured reports, typed code.</li>
+        <li>For RAG pipelines, chunk documents at <strong>~512 tokens with overlap</strong> for better retrieval recall.</li>
+        <li>Use <strong>prompt caching</strong> (Anthropic/OpenAI) to cut evaluation costs by up to 90% when running 1000+ benchmark completions.</li>
+        <li>Test prompt variations with <code>langchain</code> or <code>promptflow</code> to benchmark which formulation yields the most reliable output.</li>
+      </ul>
+    </section>
+
+
+    <section class="content-section" id="rag">
+      <h2 class="section-title">Retrieval-Augmented Generation (RAG)</h2>
+      <p>RAG is an architecture pattern that extends an LLM with access to external, up-to-date, or private knowledge at inference time — without retraining the model. Instead of relying solely on the model's training data, RAG retrieves relevant documents on demand and injects them into the prompt as grounded context.</p>
+
+      <div class="callout">
+        <p class="callout-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          Why RAG exists — the three LLM limitations it solves
+        </p>
+        <p><strong>1. Knowledge cutoff</strong> — LLMs know nothing after their training date. RAG adds a live knowledge base. <strong>2. Hallucination</strong> — grounding the model on retrieved source documents dramatically reduces fabrication. <strong>3. Private data</strong> — your internal docs, codebase, Jira tickets, and Confluence pages are never in any public model's training data. RAG makes them accessible.</p>
+      </div>
+
+      <h3 class="section-subtitle">The RAG Pipeline — 6 Stages</h3>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Stage</th><th>What Happens</th><th>Key Decisions</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td><strong>Ingest</strong></td><td>Load raw sources: PDFs, web pages, Markdown, code, tickets</td><td>Which sources? Update frequency?</td></tr>
+            <tr><td>2</td><td><strong>Chunk</strong></td><td>Split documents into retrievable segments</td><td>Chunk size (~512 tokens), overlap (~50 tokens), strategy</td></tr>
+            <tr><td>3</td><td><strong>Embed</strong></td><td>Convert each chunk to a dense vector via an embedding model</td><td>Model choice: <code>text-embedding-3-small</code>, <code>all-MiniLM-L6-v2</code></td></tr>
+            <tr><td>4</td><td><strong>Index</strong></td><td>Store vectors + metadata in a vector database</td><td>DB choice: Qdrant, Chroma, Pinecone, pgvector</td></tr>
+            <tr><td>5</td><td><strong>Retrieve</strong></td><td>Embed the query, similarity-search the index, return top-k chunks</td><td>k value, similarity threshold, hybrid vs. dense search</td></tr>
+            <tr><td>6</td><td><strong>Generate</strong></td><td>Inject retrieved chunks into the prompt, LLM generates grounded answer</td><td>Context window budget, citation instructions</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="section-subtitle">Minimal RAG in Python (LangChain + Qdrant)</h3>
+      <div class="code-label">End-to-end RAG pipeline</div>
+      <pre><code><span class="kw">from</span> langchain_community.document_loaders <span class="kw">import</span> DirectoryLoader
+<span class="kw">from</span> langchain.text_splitter <span class="kw">import</span> RecursiveCharacterTextSplitter
+<span class="kw">from</span> langchain_openai <span class="kw">import</span> OpenAIEmbeddings, ChatOpenAI
+<span class="kw">from</span> langchain_qdrant <span class="kw">import</span> QdrantVectorStore
+<span class="kw">from</span> langchain.chains <span class="kw">import</span> RetrievalQA
+
+<span class="cm"># ── Stage 1-2: Load & chunk ─────────────────────────────────────────</span>
+loader = DirectoryLoader(<span class="str">"./docs"</span>, glob=<span class="str">"**/*.md"</span>)
+docs = loader.load()
+
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=<span class="kw">512</span>, chunk_overlap=<span class="kw">50</span>
+)
+chunks = splitter.split_documents(docs)
+
+<span class="cm"># ── Stage 3-4: Embed & index ────────────────────────────────────────</span>
+embeddings = OpenAIEmbeddings(model=<span class="str">"text-embedding-3-small"</span>)
+vectorstore = QdrantVectorStore.from_documents(
+    chunks, embeddings,
+    url=<span class="str">"http://localhost:6333"</span>,
+    collection_name=<span class="str">"my-knowledge-base"</span>
+)
+
+<span class="cm"># ── Stage 5-6: Retrieve & generate ──────────────────────────────────</span>
+retriever = vectorstore.as_retriever(search_kwargs={<span class="str">"k"</span>: <span class="kw">5</span>})
+llm = ChatOpenAI(model=<span class="str">"gpt-4o-mini"</span>)
+
+qa_chain = RetrievalQA.from_chain_type(
+    llm=llm,
+    retriever=retriever,
+    return_source_documents=<span class="kw">True</span>   <span class="cm"># always verify your sources</span>
+)
+
+result = qa_chain.invoke({<span class="str">"query"</span>: <span class="str">"How do I deploy to staging?"</span>})
+print(result[<span class="str">"result"</span>])
+print(<span class="str">"Sources:"</span>, [d.metadata[<span class="str">"source"</span>] <span class="kw">for</span> d <span class="kw">in</span> result[<span class="str">"source_documents"</span>]])</code></pre>
+
+      <h3 class="section-subtitle">Chunking Strategies</h3>
+      <p>Chunking is one of the highest-leverage decisions in a RAG pipeline — poor chunking directly degrades retrieval quality regardless of how good your embedding model or vector DB is.</p>
+
+      <div class="cards-grid">
+        <div class="card">
+          <div class="card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+          </div>
+          <p class="card-title">Fixed-Size Chunking</p>
+          <p class="card-desc">Split every N tokens with an overlap window. Fast and predictable. Best for uniform documents (log files, structured records). Default: 512 tokens, 50-token overlap.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h12M3 18h8"/></svg>
+          </div>
+          <p class="card-title">Recursive / Semantic</p>
+          <p class="card-desc">Split on paragraph → sentence → word boundaries in order. Preserves natural language boundaries. Best for prose documents, README files, and knowledge articles.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+          </div>
+          <p class="card-title">Document-Aware</p>
+          <p class="card-desc">Chunk by Markdown headers, HTML sections, or code functions. Keeps semantic units intact. Best for technical docs, API references, and code repositories.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83"/></svg>
+          </div>
+          <p class="card-title">Agentic / Late Chunking</p>
+          <p class="card-desc">Embed entire documents first, then chunk only the retrieved documents at query time. Slower on first call but cached results become faster. Preserves full document context.</p>
+        </div>
+      </div>
+
+      <h3 class="section-subtitle">Advanced RAG Patterns</h3>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Pattern</th><th>How It Works</th><th>Best When</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Hybrid Search</strong></td><td>Combines dense vector similarity (semantic) with BM25 keyword scoring, merged via Reciprocal Rank Fusion (RRF)</td><td>Domain with exact-match terms (product names, error codes, IDs)</td></tr>
+            <tr><td><strong>Re-Ranking</strong></td><td>Initial retrieval fetches top-20 candidates, a cross-encoder re-ranks to top-5 for the LLM</td><td>High-precision tasks where top-1 accuracy matters</td></tr>
+            <tr><td><strong>Query Expansion</strong></td><td>LLM rephrases the query 2–3 ways before retrieval, results merged — improves recall</td><td>Ambiguous or short user queries</td></tr>
+            <tr><td><strong>Agentic RAG</strong></td><td>Agent decides when and how to retrieve — multi-hop, iterative, self-correcting retrieval loops</td><td>Complex multi-step questions requiring reasoning across sources</td></tr>
+            <tr><td><strong>Self-RAG</strong></td><td>Model uses reflection tokens to decide if retrieval is needed at all, then evaluates relevance of what it retrieved</td><td>Mixed queries — some need retrieval, some don't</td></tr>
+            <tr><td><strong>Multi-Modal RAG</strong></td><td>Separate embedding pipelines for text and images (CLIP), unified retrieval</td><td>Document sets with diagrams, charts, screenshots</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="section-subtitle">Common Failure Modes &amp; Fixes</h3>
+      <ul class="content-list">
+        <li><strong>Chunks too large</strong> — dilutes signal in the embedding vector. Fix: reduce to 256–512 tokens, increase overlap to 10–15%.</li>
+        <li><strong>Missing exact-match terms</strong> — vector search misses product names, error codes, IDs. Fix: add BM25 hybrid search alongside dense vectors.</li>
+        <li><strong>Context stuffing</strong> — jamming all top-k chunks fills the context window with noise. Fix: re-rank before injection; use top-3, not top-10.</li>
+        <li><strong>Stale index</strong> — knowledge base not refreshed when source docs update. Fix: incremental ingestion on document change events (webhooks or polling).</li>
+        <li><strong>No source attribution</strong> — model answers without citing which chunks it used; impossible to verify. Fix: always return <code>source_documents</code> and render source links in your UI.</li>
+      </ul>
+
+      <h3 class="section-subtitle">Vector Store Options</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Store</th><th>Best For</th><th>Hosting</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Qdrant</strong></td><td>Production, high performance</td><td>Self-hosted / Cloud</td><td>Rust-based, rich filtering, sub-millisecond at scale</td></tr>
+            <tr><td><strong>Chroma</strong></td><td>Local dev, prototyping</td><td>In-process / Docker</td><td>Zero config, Python-native, easy to start</td></tr>
+            <tr><td><strong>Pinecone</strong></td><td>Managed cloud production</td><td>SaaS</td><td>Fully managed, serverless tier, automatic scaling</td></tr>
+            <tr><td><strong>pgvector</strong></td><td>PostgreSQL-first stacks</td><td>Self-hosted</td><td>SQL + vectors in one DB, no separate infra</td></tr>
+            <tr><td><strong>Weaviate</strong></td><td>Multi-modal, graph traversal</td><td>Self-hosted / Cloud</td><td>Built-in modules for text, image, hybrid</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <hr class="section-divider">
+
+    <!-- ===== PART 2 ===== -->
+    <section class="content-section" id="skills">
+      <p class="section-eyebrow">Part 2 — Agent Building Blocks</p>
+      <h2 class="section-title">Agent Skills</h2>
+      <p>Skills are modular, reusable capability packages — written once and loaded by any compatible agent. Each skill lives in a <code>SKILL.md</code> file (or similar) and is loaded automatically when the task description matches the skill's trigger keywords.</p>
+
+      <div class="callout">
+        <p class="callout-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          Best practices for writing skills
+        </p>
+        <p>Keep each skill focused on one job. Write imperative steps with explicit inputs and outputs. Front-load trigger keywords so the agent can match it implicitly. Prefer plain instructions over scripts unless you need deterministic behavior.</p>
+      </div>
+
+      <div class="code-label">Example SKILL.md structure</div>
+      <pre><code><span class="cm"># Skill: generate-standup</span>
+<span class="cm"># Trigger: "standup", "daily update", "git log summary"</span>
+
+<span class="kw">description:</span> <span class="str">"Generate a standup update from the git log of the last 24 hours."</span>
+
+<span class="kw">steps:</span>
+  1. Run <span class="str">`git log --since="24 hours ago" --oneline`</span>
+  2. Group commits by ticket number or feature area
+  3. Summarize in standup format: Done / In Progress / Blocked
+  4. Output as plain text, max 5 bullets</code></pre>
+    </section>
+
+    <section class="content-section" id="hooks">
+      <h2 class="section-title">Hooks</h2>
+      <p>Hooks are lifecycle interceptors — they run automatically at specific points around agent execution. They fire before the agent's prompt loads, after completion, or around specific events like file edits.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Hook</th><th>When It Fires</th><th>Common Use Cases</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>before-work</code></td><td>Before the agent starts a task</td><td>Validate inputs, load context</td></tr>
+            <tr><td><code>after-work</code></td><td>After the task completes</td><td>Logging, notifications, CI triggers</td></tr>
+            <tr><td><code>before-edit</code></td><td>Before a file is modified</td><td>Security checks, backups</td></tr>
+            <tr><td><code>after-edit</code></td><td>After a file is modified</td><td>Linting, formatting, tests</td></tr>
+            <tr><td><code>on-error</code></td><td>On failure</td><td>Error reporting, Slack alerts</td></tr>
+            <tr><td><code>on-success</code></td><td>On success</td><td>Deploy triggers, webhooks</td></tr>
+            <tr><td><code>on-retry</code></td><td>On retry attempts</td><td>Backoff logic, alternate strategies</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-label">Hook example — auto-lint after edit</div>
+      <pre><code><span class="cm"># .hooks/after-edit.sh</span>
+<span class="kw">if</span> [[ <span class="str">"$EDITED_FILE"</span> == *.py ]]; then
+  <span class="kw">ruff</span> check <span class="str">"$EDITED_FILE"</span> --fix
+  <span class="kw">black</span> <span class="str">"$EDITED_FILE"</span>
+fi</code></pre>
+    </section>
+
+    <section class="content-section" id="agent-architecture">
+      <h2 class="section-title">Agent Prompt Architecture</h2>
+      <p>When a prompt runs inside an agent, context assembles in a specific order. Understanding this stack lets you design more predictable, debuggable agents.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Layer</th><th>What It Contains</th><th>Engineering Role</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>System Prompt</td><td>Persona, constraints, output format</td><td>Set once, persists every turn</td></tr>
+            <tr><td>Skills</td><td>Loaded SKILL.md files matching the task</td><td>Reusable capability modules</td></tr>
+            <tr><td>Tool Schemas</td><td>API/tool definitions the agent can call</td><td>Defines agent's action space</td></tr>
+            <tr><td>Hooks</td><td>Pre/post lifecycle instructions</td><td>Validation, logging, safety</td></tr>
+            <tr><td>Memory / Context</td><td>Prior session summaries, retrieved docs</td><td>RAG, conversation history</td></tr>
+            <tr><td>User Message</td><td>The actual task or query</td><td>What the agent acts on</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="section-subtitle">Key Agent Prompting Patterns</h3>
+      <ul class="content-list">
+        <li><strong>Goal prompts over task prompts</strong> — tell the agent what success looks like, not just the next step</li>
+        <li><strong>Memory continuity</strong> — <em>"Before the next step, summarize: completed tasks, errors, tools used, decisions made"</em></li>
+        <li><strong>Explicit tool invocation</strong> — <em>"Use the search tool first, then the write tool, then confirm"</em></li>
+        <li><strong>Chain-of-thought</strong> — ask agents to reason step-by-step to make debugging possible and reduce confident-but-wrong outputs</li>
+      </ul>
+    </section>
+
+    <section class="content-section" id="mcp">
+      <h2 class="section-title">MCP — Model Context Protocol</h2>
+      <p>MCP is an open standard that lets agents connect to external tools and data sources in a standardized way. Think of it as USB-C for AI agents — write one connector, use it across Claude, Codex, Cursor, and other compatible runtimes.</p>
+
+      <div class="callout">
+        <p class="callout-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Context Engineering
+        </p>
+        <p>Anthropic's term for managing the full context state: system instructions, tools, MCP connections, and message history. It extends beyond prompting into how you architect the entire information flow into the model.</p>
+      </div>
+
+      <div class="code-label">Simple MCP server in Python</div>
+      <pre><code><span class="kw">from</span> mcp <span class="kw">import</span> Server, tool
+
+server = <span class="kw">Server</span>(<span class="str">"my-code-tools"</span>)
+
+<span class="kw">@tool</span>
+<span class="kw">def</span> run_tests(file_path: str) -> str:
+    <span class="str">"""Run pytest on a specific file and return the output."""</span>
+    result = subprocess.run([<span class="str">"pytest"</span>, file_path, <span class="str">"-v"</span>], capture_output=<span class="kw">True</span>)
+    <span class="kw">return</span> result.stdout.decode()
+
+server.run()</code></pre>
+    </section>
+
+    <section class="content-section" id="plugins">
+      <h2 class="section-title">Plugins</h2>
+      <p>A plugin bundles multiple skills — and other components like tool connections — into a single installable, shareable package. If a skill is the recipe, a plugin is the cookbook. This distinction matters as your agent workflows grow in complexity.</p>
+
+      <div class="callout">
+        <p class="callout-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          Skill vs. Plugin — the core difference
+        </p>
+        <p><strong>Use a skill</strong> when you have one repeatable, self-contained workflow — deploying to staging, reviewing a PR, writing a status update. If the instructions fit in one file, a skill is enough. <strong>Use a plugin</strong> when you have a collection of related skills that should travel together, or when the workflow needs external tool connections (e.g., CRM, Jira, Slack).</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Dimension</th><th>Skill</th><th>Plugin</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Scope</td><td>One specific, self-contained task</td><td>Collection of related skills + tool connections</td></tr>
+            <tr><td>File structure</td><td>Single <code>SKILL.md</code> file</td><td>Directory with manifest, multiple skills, config</td></tr>
+            <tr><td>Versioning</td><td>Per-file, manual</td><td>Packaged and versioned as one unit</td></tr>
+            <tr><td>Distribution</td><td>Copy/paste or Git submodule</td><td>Install via registry or package manager</td></tr>
+            <tr><td>External tools</td><td>Rarely needed</td><td>Bundles MCP connections (CRM, CI, APIs)</td></tr>
+            <tr><td>Example</td><td>"Generate standup from git log"</td><td>"Sales enablement" — call prep + research + CRM sync</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="section-subtitle">Plugin Structure Example</h3>
+      <div class="code-label">sales-enablement plugin layout</div>
+      <pre><code>sales-enablement/
+├── plugin.json          <span class="cm"># manifest: name, version, description, mcp connections</span>
+├── skills/
+│   ├── call-prep.md     <span class="cm"># skill: prepare talking points before a sales call</span>
+│   ├── account-research.md  <span class="cm"># skill: research a prospect from LinkedIn + CRM</span>
+│   └── deal-analysis.md    <span class="cm"># skill: summarize deal stage and next actions</span>
+└── mcp/
+    └── salesforce.json  <span class="cm"># MCP connector config for Salesforce CRM</span></code></pre>
+
+      <h3 class="section-subtitle">Notable Community Plugins (2026)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Plugin</th><th>Best For</th><th>Key Strength</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Superpowers</strong></td><td>Full dev workflow enforcement</td><td>Plan-before-code + TDD methodology</td></tr>
+            <tr><td><strong>Vercel React Best Practices</strong></td><td>React &amp; Next.js performance</td><td>Official Vercel patterns, 131K+ installs</td></tr>
+            <tr><td><strong>Web Design Guidelines</strong></td><td>Frontend UI/UX standards</td><td>Consistent design system enforcement</td></tr>
+            <tr><td><strong>Webapp Testing (Playwright)</strong></td><td>Automated browser testing</td><td>Visual testing with screenshots</td></tr>
+            <tr><td><strong>Document Skills</strong></td><td>PDF, DOCX generation</td><td>Production-grade document handling</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="content-section" id="agent-prompts">
+      <h2 class="section-title">Prompts in Agent Context</h2>
+      <p>In agentic applications, prompts have a strict hierarchy. Understanding each layer — and what belongs in each — is the foundation for building reliable, secure, and consistent AI systems.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Prompt Type</th><th>Scope</th><th>Set By</th><th>Changes When</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="tag tag-teal">System Prompt</span></td><td>Application-wide, all users</td><td>Developer</td><td>Product behavior changes</td></tr>
+            <tr><td><span class="tag tag-teal">User Prompt</span></td><td>Session-specific, one interaction</td><td>End user</td><td>Every turn</td></tr>
+            <tr><td><span class="tag tag-teal">Agent Prompt</span></td><td>Goal-oriented, multi-step</td><td>Developer/orchestrator</td><td>Task or tool context changes</td></tr>
+            <tr><td><span class="tag tag-teal">Tool Prompt</span></td><td>Single tool invocation</td><td>Tool schema definition</td><td>Tool is called</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="section-subtitle">System Prompts</h3>
+      <p>System prompts establish application-wide behavior that persists across every user interaction in a session. They are ideal for defining brand voice, output formatting, safety constraints, and operational boundaries. The model gives system prompts the highest attention priority — they shape behavior even more than the user message.</p>
+
+      <div class="code-label">Production system prompt pattern</div>
+      <pre><code><span class="cm"># System Prompt Template</span>
+<span class="kw">You are</span> [role], a [description] assistant for [product/team].
+
+<span class="kw">Behavior rules:</span>
+- Respond only about [domain]. Politely decline out-of-scope questions.
+- Always format code responses as fenced blocks with language tags.
+- If the user asks you to do something dangerous, refuse and explain why.
+- Default response language: English. Mirror user's language if they switch.
+
+<span class="kw">Output format:</span>
+- Use Markdown headings for structure.
+- Keep answers under 400 words unless the user explicitly asks for more.
+- Cite your reasoning when making non-obvious decisions.</code></pre>
+
+      <h3 class="section-subtitle">User Prompts</h3>
+      <p>User prompts are session-specific and transient — they contain the variable content that makes each interaction unique. They operate within the framework established by the system prompt, and can invoke specific roles or modes without permanently changing the agent's behavior for all future turns.</p>
+
+      <div class="callout">
+        <p class="callout-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Position Bias — a production gotcha
+        </p>
+        <p>Models prioritize messages based on their position. System messages receive the highest attention weight. In coding scenarios where original code is in the system prompt, the model may prioritize the initial code over revisions made later in the conversation. Keep mutable content in user messages, not the system prompt.</p>
+      </div>
+
+      <h3 class="section-subtitle">Agent Prompts vs. Standard Prompts</h3>
+      <p>Agent prompts are far more detailed than standard LLM prompts — they serve as the primary control mechanism for complex, goal-oriented, and multi-step processes. Key differences:</p>
+
+      <div class="cards-grid">
+        <div class="card">
+          <div class="card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <p class="card-title">Standard Prompt</p>
+          <p class="card-desc">One turn. User asks, model answers. No planning, no tool calls, no memory. Stateless by default.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </div>
+          <p class="card-title">Agent Prompt</p>
+          <p class="card-desc">Multi-step. Defines goal, available tools, fallback logic, memory instructions, and output contracts. Stateful across turns.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+          </div>
+          <p class="card-title">Resilience Instructions</p>
+          <p class="card-desc">Agent prompts include fallback logic: <em>"If a search returns no results, rephrase with broader terms. If still no results, ask the user."</em></p>
+        </div>
+        <div class="card">
+          <div class="card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <p class="card-title">Tool Invocation Prompts</p>
+          <p class="card-desc">Explicitly define when and how to call tools: <em>"Use the search tool first. Only write files after user confirms the plan."</em></p>
+        </div>
+      </div>
+
+      <h3 class="section-subtitle">Prompt Hierarchy Best Practices</h3>
+      <ul class="content-list">
+        <li><strong>System prompt = configuration layer</strong> — persona, safety constraints, output format, domain limits. Never put mutable or user-specific data here.</li>
+        <li><strong>User prompt = request layer</strong> — the actual task. Can invoke a role (<em>"As a financial analyst..."</em>) without permanently changing system behavior.</li>
+        <li><strong>Inject RAG context in the user turn</strong>, not the system prompt — keeps the system prompt lean and the retrieved content close to the question.</li>
+        <li><strong>Use the assistant role</strong> for multi-turn memory — include prior assistant responses in the message history to maintain reasoning continuity.</li>
+        <li><strong>Keep system prompts under 800 tokens</strong> — bloated system prompts dilute attention on the core instructions and increase cost per call.</li>
+      </ul>
+    </section>
+
+    <hr class="section-divider">
+
+    <!-- ===== PART 3 ===== -->
+    <section class="content-section" id="promptflow">
+      <p class="section-eyebrow">Part 3 — Benchmarking</p>
+      <h2 class="section-title">PromptFlow (Microsoft)</h2>
+      <p>PromptFlow models your pipeline as a Directed Acyclic Graph (DAG) where each node is an LLM call, Python function, or tool. This makes flows traceable and easy to debug visually — ideal for Azure-based teams and structured pipelines.</p>
+
+      <div class="code-label">Benchmarking workflow</div>
+      <pre><code><span class="kw">from</span> promptflow.client <span class="kw">import</span> PFClient
+<span class="kw">import</span> json
+
+pf = PFClient()
+
+<span class="cm"># 1. Run base flow against a dataset</span>
+base_run = pf.run(
+    flow=<span class="str">"./my-flow"</span>,
+    data=<span class="str">"./data.jsonl"</span>
+)
+
+<span class="cm"># 2. Chain an eval flow onto the base run</span>
+eval_run = pf.run(
+    flow=<span class="str">"./evaluation/eval-classification-accuracy"</span>,
+    run=base_run
+)
+
+<span class="cm"># 3. Get metrics and open browser dashboard</span>
+metrics = pf.get_metrics(eval_run)
+print(json.dumps(metrics, indent=4))
+pf.visualize([base_run, eval_run])</code></pre>
+
+      <h3 class="section-subtitle">Built-in PromptFlow Metrics</h3>
+      <ul class="content-list">
+        <li>Accuracy, F1 score, GPT similarity</li>
+        <li>Relevance scoring, Ada similarity</li>
+        <li>Custom Python-based evaluators for domain-specific criteria</li>
+      </ul>
+    </section>
+
+    <section class="content-section" id="langchain">
+      <h2 class="section-title">LangChain + LangSmith</h2>
+      <p>LangChain's benchmarking power lives in LangSmith, its evaluation and observability platform. It is code-first and better for complex agent or multi-model comparisons. LangChain benchmarked 5 prompt optimization methods across 3 models, finding up to 200% performance improvement from automated prompt tuning.</p>
+
+      <h3 class="section-subtitle">Core LangSmith Workflow</h3>
+      <ol class="step-list">
+        <li><span><strong>Create a dataset</strong> — a <code>.jsonl</code> of <code>{input, expected_output}</code> pairs in LangSmith UI or SDK</span></li>
+        <li><span><strong>Define an evaluator</strong> — LLM-as-a-Judge, exact match, or custom scoring function</span></li>
+        <li><span><strong>Run evaluation</strong> — run your chain/agent against the dataset</span></li>
+        <li><span><strong>Compare runs</strong> — diff prompt versions side-by-side with score graphs</span></li>
+      </ol>
+
+      <div class="code-label">LLM-as-a-Judge evaluator</div>
+      <pre><code><span class="kw">from</span> langsmith <span class="kw">import</span> Client
+<span class="kw">from</span> langsmith.evaluation <span class="kw">import</span> evaluate
+
+<span class="kw">def</span> correctness_evaluator(run, example):
+    score = judge_llm.invoke(
+        <span class="str">f"Question: {example.inputs['question']}\n"</span>
+        <span class="str">f"Expected: {example.outputs['answer']}\n"</span>
+        <span class="str">f"Got: {run.outputs['answer']}\n"</span>
+        <span class="str">f"Score 1-5:"</span>
+    )
+    <span class="kw">return</span> {<span class="str">"score"</span>: int(score.content)}
+
+evaluate(
+    your_chain,
+    data=<span class="str">"my-benchmark-dataset"</span>,
+    evaluators=[correctness_evaluator],
+    experiment_prefix=<span class="str">"prompt-v2"</span>
+)</code></pre>
+    </section>
+
+    <section class="content-section" id="comparison">
+      <h2 class="section-title">PromptFlow vs. LangSmith</h2>
+      <p>Both tools can be combined — LangChain inside a PromptFlow node gives you maximum flexibility. Choose based on your primary workflow and deployment environment.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Dimension</th><th>PromptFlow</th><th>LangChain + LangSmith</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Interface</td><td>Visual DAG editor + code</td><td>Code-first, UI for results</td></tr>
+            <tr><td>Benchmarking</td><td>Batch runs with built-in metrics</td><td>Dataset-driven, LLM-as-judge</td></tr>
+            <tr><td>Best for</td><td>Azure apps, structured pipelines</td><td>Complex agents, multi-model comparison</td></tr>
+            <tr><td>CI/CD integration</td><td>Native Azure DevOps / GitHub Actions</td><td>Via LangSmith API</td></tr>
+            <tr><td>Prompt optimization</td><td>Manual iteration</td><td>Automated (meta-prompting, DSPy-style)</td></tr>
+            <tr><td>Learning curve</td><td>Lower — visual first</td><td>Higher — more Python needed</td></tr>
+            <tr><td>LangChain integration</td><td>Can embed inside nodes</td><td>Native</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="section-subtitle">5-Step Engineering Workflow</h3>
+      <ol class="step-list">
+        <li><span><strong>Build a golden test set</strong> — 50–100 representative <code>{input, expected}</code> pairs covering edge cases and regressions</span></li>
+        <li><span><strong>Run on every prompt change</strong> — treat it like unit tests for your instructions</span></li>
+        <li><span><strong>Use LLM-as-a-Judge</strong> for open-ended outputs where exact match fails (code explanations, summaries)</span></li>
+        <li><span><strong>Track with LangSmith</strong> — tag experiments by model version, prompt version, and date</span></li>
+        <li><span><strong>Enable prompt caching</strong> to cut evaluation costs by up to 90% when running 1000+ benchmark completions</span></li>
+      </ol>
+    </section>
+
+    <hr class="section-divider">
+
+    <!-- ===== RESOURCES ===== -->
+    <section class="content-section" id="resources">
+      <p class="section-eyebrow">Further Learning</p>
+      <h2 class="section-title">Learning Resources</h2>
+      <p>A curated list of the best free references, docs, and tutorials for each topic covered in this guide.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Resource</th><th>Type</th><th>Focus</th></tr>
+          </thead>
+          <tbody class="resource-row">
+            <tr><td><a href="https://www.promptingguide.ai" target="_blank" rel="noopener">promptingguide.ai</a></td><td>Free guide</td><td>All prompt engineering techniques</td></tr>
+            <tr><td><a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents" target="_blank" rel="noopener">Anthropic Context Engineering</a></td><td>Article</td><td>Agent context management</td></tr>
+            <tr><td><a href="https://developers.openai.com/codex/skills" target="_blank" rel="noopener">OpenAI Codex Skills Docs</a></td><td>Docs</td><td>Writing and invoking agent skills</td></tr>
+            <tr><td><a href="https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices" target="_blank" rel="noopener">Claude Code Skills Best Practices</a></td><td>Docs</td><td>Claude-specific skill authoring</td></tr>
+            <tr><td><a href="https://www.youtube.com/watch?v=EsTrWCV0Ph4" target="_blank" rel="noopener">AI Agents Full Course 2026</a></td><td>YouTube · 2h</td><td>Agentic AI end-to-end</td></tr>
+            <tr><td><a href="https://www.youtube.com/watch?v=WvBv6ASCt5E" target="_blank" rel="noopener">How to Create AI Agent Skills</a></td><td>YouTube</td><td>Hands-on skill creation tutorial</td></tr>
+            <tr><td><a href="https://github.com/danielrosehill/Useful-AI-Agent-Skills" target="_blank" rel="noopener">Useful-AI-Agent-Skills (GitHub)</a></td><td>GitHub</td><td>Community skill library</td></tr>
+            <tr><td><a href="https://www.langchain.com/blog/exploring-prompt-optimization" target="_blank" rel="noopener">LangChain Prompt Optimization Blog</a></td><td>Article</td><td>Automated prompt optimization results</td></tr>
+            <tr><td><a href="https://microsoft.github.io/promptflow/" target="_blank" rel="noopener">PromptFlow Docs</a></td><td>Docs</td><td>Run, evaluate, and deploy flows</td></tr>
+            <tr><td><a href="https://dev.to/suraj_khaitan_f893c243958/-rag-in-2026-a-practical-blueprint-for-retrieval-augmented-generation-16pp" target="_blank" rel="noopener">RAG in 2026 — Practical Blueprint</a></td><td>Article</td><td>Architecture, chunking, and retrieval patterns</td></tr>
+            <tr><td><a href="https://redis.io/blog/chunking-strategy-rag-pipelines/" target="_blank" rel="noopener">Best Chunking Strategies for RAG</a></td><td>Article</td><td>Fixed-size, semantic, hybrid chunking guide</td></tr>
+            <tr><td><a href="https://docs.langchain.com/langsmith/evaluation-quickstart" target="_blank" rel="noopener">LangSmith Evaluation Quickstart</a></td><td>Docs</td><td>Evaluation pipeline setup</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <span>AI Mastery Guide · 2026 Edition</span>
+    <span>Built for software engineers and technical practitioners</span>
+  </footer>
+
+</div>
+
+<script>
+  // Theme toggle
+  (function(){
+    const t = document.querySelector('[data-theme-toggle]');
+    const r = document.documentElement;
+    let d = matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light';
+    r.setAttribute('data-theme', d);
+    const sunIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+    const moonIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+    if (t) {
+      t.innerHTML = d === 'dark' ? sunIcon : moonIcon;
+      t.addEventListener('click', () => {
+        d = d === 'dark' ? 'light' : 'dark';
+        r.setAttribute('data-theme', d);
+        t.innerHTML = d === 'dark' ? sunIcon : moonIcon;
+        t.setAttribute('aria-label', 'Switch to ' + (d === 'dark' ? 'light' : 'dark') + ' mode');
+      });
+    }
+  })();
+
+  // Reading progress
+  window.addEventListener('scroll', () => {
+    const bar = document.getElementById('reading-progress');
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (scrollTop / docHeight * 100) + '%';
+  });
+
+  // Active nav highlight on scroll
+  const sections = document.querySelectorAll('.content-section, .page-hero');
+  const navLinks = document.querySelectorAll('.nav-item a');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const link = document.querySelector(`.nav-item a[href="#${entry.target.id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => observer.observe(s));
+
+  // Mobile sidebar toggle
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebar = document.getElementById('sidebar');
+  if (sidebarToggle) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+    });
+    document.addEventListener('click', (e) => {
+      if (!sidebar.contains(e.target) && e.target !== sidebarToggle) {
+        sidebar.classList.remove('open');
+      }
+    });
+  }
+
+  // Close mobile sidebar on nav click
+  navLinks.forEach(link => {
+    link.addEventListener('click', () => sidebar.classList.remove('open'));
+  });
+</script>
+</body>
+</html>
